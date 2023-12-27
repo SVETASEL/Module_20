@@ -1,83 +1,137 @@
-let minValue = getValidInput('Минимальное значение числа для игры', 0, -999, 999);
-let maxValue = getValidInput('Максимальное значение числа для игры', 100, -999, 999);
+const minValue = parseInt(prompt('Минимальное значение числа для игры', '0')) || 0;
+const maxValue = parseInt(prompt('Максимальное значение числа для игры', '100')) || 100;
 
 const orderNumberField = document.getElementById('orderNumberField');
 const answerField = document.getElementById('answerField');
 
 let orderNumber = 1;
 let gameRun = true;
-let answerNumber = Math.floor((minValue + maxValue) / 2);
+let minValueValidated = (minValue < -999) ? -999 : (minValue > 999) ? 999 : minValue;
+let maxValueValidated = (maxValue < -999) ? -999 : (maxValue > 999) ? 999 : maxValue;
+
+if (isNaN(minValueValidated)) {
+  minValueValidated = 0;
+}
+
+if (isNaN(maxValueValidated)) {
+  maxValueValidated = 100;
+}
+
+let answerNumber = Math.floor((minValueValidated + maxValueValidated) / 2);
 
 orderNumberField.innerText = orderNumber;
 answerField.innerText = `Вы загадали число ${numberToText(answerNumber)}?`;
 
 document.getElementById('btnRetry').addEventListener('click', function () {
-  retryGame();
-});
+  const newMinValue = parseInt(prompt('Минимальное значение числа для игры', '0')) || 0;
+  const newMaxValue = parseInt(prompt('Максимальное значение числа для игры', '100')) || 100;
 
-document.getElementById('btnOver').addEventListener('click', function () {
-  guessNumber('over');
-});
+  minValueValidated = (newMinValue < -999) ? -999 : (newMinValue > 999) ? 999 : newMinValue;
+  maxValueValidated = (newMaxValue < -999) ? -999 : (newMaxValue > 999) ? 999 : newMaxValue;
 
-document.getElementById('btnLess').addEventListener('click', function () {
-  guessNumber('less');
-});
-
-document.getElementById('btnEqual').addEventListener('click', function () {
-  checkEquality();
-});
-
-function getValidInput(promptMessage, defaultValue, minValue, maxValue) {
-  let value = parseInt(prompt(promptMessage, defaultValue)) || defaultValue;
-  return (value < minValue) ? minValue : (value > maxValue) ? maxValue : value;
-}
-
-function retryGame() {
-  minValue = getValidInput('Минимальное значение числа для игры', 0, -999, 999);
-  maxValue = getValidInput('Максимальное значение числа для игры', 100, -999, 999);
   orderNumber = 1;
-  answerNumber = Math.floor((minValue + maxValue) / 2);
+  answerNumber = Math.floor((minValueValidated + maxValueValidated) / 2);
   gameRun = true;
 
   orderNumberField.innerText = orderNumber;
   answerField.innerText = `Вы загадали число ${numberToText(answerNumber)}?`;
-}
+});
 
-function guessNumber(action) {
+document.getElementById('btnOver').addEventListener('click', function () {
   if (gameRun) {
-    if (action === 'over') {
-      minValue = answerNumber + 1;
-    } else if (action === 'less') {
-      maxValue = answerNumber - 1;
-    }
-
-    if (minValue > maxValue) {
-      answerField.innerText = `Вы загадали неправильное число!\n\u{1F914}`;
+    if (minValueValidated === maxValueValidated) {
+      const answerPhrase = `Не могу определить число!\n\u{1F914}`;
+      answerField.innerText = answerPhrase;
       gameRun = false;
     } else {
-      answerNumber = Math.floor((minValue + maxValue) / 2);
+      minValueValidated = answerNumber + 1;
+      answerNumber = Math.floor((minValueValidated + maxValueValidated) / 2);
       orderNumber++;
       orderNumberField.innerText = orderNumber;
-      answerField.innerText = `Это число ${numberToText(answerNumber)}?`;
+
+      const phraseRandom = Math.floor(Math.random() * 3);
+      let answerPhrase = getAnswerPhrase(phraseRandom, answerNumber);
+      answerField.innerText = answerPhrase;
     }
   }
-}
+});
 
-function checkEquality() {
+document.getElementById('btnLess').addEventListener('click', function () {
   if (gameRun) {
-    const phrase = getRandomPhrase();
-    answerField.innerText = phrase;
+    if (minValueValidated > maxValueValidated) {
+      const answerPhrase = `Я сдаюсь!\n\u{1F914}`;
+      answerField.innerText = answerPhrase;
+      gameRun = false;
+    } else {
+      maxValueValidated = answerNumber - 1;
+      if (minValueValidated > maxValueValidated) {
+        const answerPhrase = `Вы загадали неправильное число!\n\u{1F914}`;
+        answerField.innerText = answerPhrase;
+        gameRun = false;
+      } else {
+        answerNumber = Math.floor((minValueValidated + maxValueValidated) / 2);
+        orderNumber++;
+        orderNumberField.innerText = orderNumber;
+
+        const phraseRandom = Math.floor(Math.random() * 3);
+        let answerPhrase = getAnswerPhrase(phraseRandom, answerNumber);
+        answerField.innerText = answerPhrase;
+      }
+    }
+  }
+});
+
+document.getElementById('btnEqual').addEventListener('click', function () {
+  if (gameRun) {
+    const phraseRandom = Math.floor(Math.random() * 3);
+    let answerPhrase = getAnswerPhrase(phraseRandom, answerNumber);
+    answerField.innerText = answerPhrase;
     gameRun = false;
+  }
+});
+
+function getAnswerPhrase(phraseRandom, answerNumber) {
+  switch (phraseRandom) {
+    case 0:
+      return `Легко! Это число ${numberToText(answerNumber)}?`;
+    case 1:
+      return `Может быть, число ${numberToText(answerNumber)}?`;
+    case 2:
+      return `Думаю, это число ${numberToText(answerNumber)}.`;
+    default:
+      return '';
   }
 }
 
-function getRandomPhrase() {
-  const phrases = [
-    `Я всегда угадываю! Твое число - ${numberToText(answerNumber)}\n\u{1F60E}`,
-    `Это было просто! Загаданное число - ${numberToText(answerNumber)}\n\u{1F643}`,
-    `Мне несложно! Ответ - ${numberToText(answerNumber)}.\u{1F601}`
-  ];
-  const randomIndex = Math.floor(Math.random() * phrases.length);
-  return phrases[randomIndex];
+function numberToText(num) {
+  const units = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять', 'десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+  const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+  const hundreds = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
+
+  if (num === 0) {
+    return 'ноль';
+  }
+
+  if (num < 0 && num >= -999) {
+    return 'минус ' + numberToText(Math.abs(num));
+  }
+
+  if (num < 20) {
+    return units[num];
+  }
+
+  if (num < 100) {
+    const tensText = tens[Math.floor(num / 10)];
+    const unitsText = units[num % 10];
+    return (tensText + ' ' + unitsText).trim();
+  }
+
+  if (num < 1000) {
+    const hundredsText = hundreds[Math.floor(num / 100)];
+    const remainderText = numberToText(num % 100);
+    return (hundredsText + ' ' + remainderText).trim();
+  }
+
+  return num.toString();
 }
 
